@@ -64,8 +64,9 @@ store in [vaani/clinic/store.py](vaani/clinic/store.py).
 # interactive conversation (any configured language, code-mixing fine)
 python -m vaani.tools.chat_cli --lang hi-IN
 
-# scripted conversation from a file (one caller line per line)
-python -m vaani.tools.chat_cli --lang mr-IN --seed --script convo.txt
+# scripted conversation from a file (one caller line per line; see examples/)
+python -m vaani.tools.chat_cli --lang mr-IN --seed --script examples/mr_cancel.txt
+python -m vaani.tools.chat_cli --lang hi-IN --script examples/hinglish_booking.txt
 
 # offline tests: normalization, FSM transitions, retries, tools
 python -m pytest tests/
