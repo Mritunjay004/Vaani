@@ -1,0 +1,64 @@
+# Vaani vertical config — clinic appointment intake.
+# All vertical-specific behavior lives here. Code must not hardcode any of it.
+
+vertical: clinic_intake
+
+# Languages the agent will *converse* in. Must be a subset of what Bulbul v3
+# can speak. Saaras understands 23 languages; if the caller speaks one we
+# can't speak back (e.g. Maithili), we reply in fallback_language after
+# apologizing (see language_gap_behavior).
+languages: [hi-IN, mr-IN, ta-IN, en-IN]
+fallback_language: hi-IN
+
+# What to do when caller's detected language is understood (Saaras) but not
+# speakable (Bulbul): "fallback" = apologize + continue in fallback_language,
+# "handoff" = transfer to human.
+language_gap_behavior: fallback
+
+stt:
+  model: saaras:v3-realtime      # realtime WS accepts only this model name
+  batch_model: saaras:v3         # post-call analytics / file transcription
+  mode: transcribe               # candidate: codemix — pick by measured WER (eval harness)
+  stream_type: balanced          # fast | balanced
+  sample_rate: 16000             # 8000 on the telephony path (set by transport)
+  encoding: linear16             # mulaw on the telephony path
+  vad:
+    threshold: 0.3
+    silence_duration_ms: 500
+    min_speech_duration_ms: 250
+
+tts:
+  model: "bulbul:v3"
+  speaker: shubh   # bulbul:v3 roster (anushka is v2-only)
+  pace: 1.0
+  sample_rate: 16000             # 8000 + mulaw on the telephony path
+  output_audio_codec: wav
+  # Pronunciation dictionary id (create once via TTS API, then pin here)
+  dict_id: null
+
+llm:
+  model: sarvam-105b-conversations
+  endpoint: https://api.sarvam.ai/v1/chat/completions   # /v1 serves the conversations variant
+  temperature: 0.2
+  max_tokens: 300
+
+clinic:
+  name: "Shree Clinic"
+  # Doctor names also get pronunciation-dictionary entries (tts.dict_id)
+  doctors:
+    - id: dr_mehta
+      name: "Dr. Mehta"
+      department: general
+    - id: dr_iyer
+      name: "Dr. Iyer"
+      department: pediatrics
+  hours: { open: "09:00", close: "18:00", slot_minutes: 15 }
+
+dialogue:
+  max_slot_retries: 2            # then HANDOFF — never loop
+  silence_timeout_s: 6
+  states: [GREET, IDENTIFY, INTENT, COLLECT_BOOKING, FIND_APPOINTMENT,
+           CONFIRM_TARGET, OFFER_SLOTS, CONFIRM, COMMIT, CLOSE, HANDOFF]
+
+tools: [get_availability, book_appointment, reschedule_appointment,
+        cancel_appointment, find_appointments, take_callback]
