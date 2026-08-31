@@ -12,7 +12,7 @@ a new vertical is a new config file, not a fork.
 ## Status
 
 - [x] **Step 1** — Sarvam STT + TTS standalone against local audio files
-- [ ] Step 2 — text-only LLM booking loop
+- [x] **Step 2** — text-only LLM booking loop (FSM + tools + normalization)
 - [ ] Step 3 — composed voice loop over the local simulator
 - [ ] Step 4 — LiveKit orchestration (VAD, barge-in)
 - [ ] Step 5 — Exotel telephony
@@ -50,6 +50,29 @@ python -m vaani.tools.stt_file out.wav --batch
 # Self test: TTS a phrase in every configured language, STT it back
 python -m vaani.tools.roundtrip
 ```
+
+## Step 2: text-only booking loop
+
+The full agent minus audio: `sarvam-105b-conversations` extracts slots
+(forced tool call) and phrases replies; an explicit FSM in
+[vaani/dialogue/fsm.py](vaani/dialogue/fsm.py) owns all control flow; dates,
+times, and phone numbers resolve through the deterministic normalizer in
+[vaani/nlu/normalize.py](vaani/nlu/normalize.py); bookings hit the SQLite
+store in [vaani/clinic/store.py](vaani/clinic/store.py).
+
+```bash
+# interactive conversation (any configured language, code-mixing fine)
+python -m vaani.tools.chat_cli --lang hi-IN
+
+# scripted conversation from a file (one caller line per line)
+python -m vaani.tools.chat_cli --lang mr-IN --seed --script convo.txt
+
+# offline tests: normalization, FSM transitions, retries, tools
+python -m pytest tests/
+```
+
+`--seed` books a demo appointment (Ravi Kumar, 9876543210) so reschedule and
+cancel flows have something to find.
 
 ## Configuration
 

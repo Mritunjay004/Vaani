@@ -49,9 +49,11 @@ clinic:
     - id: dr_mehta
       name: "Dr. Mehta"
       department: general
+      aliases: [mehta, मेहता, மேத்தா]
     - id: dr_iyer
       name: "Dr. Iyer"
       department: pediatrics
+      aliases: [iyer, अय्यर, आयर, ஐயர், children, बच्चों, மகப்பேறு]
   hours: { open: "09:00", close: "18:00", slot_minutes: 15 }
 
 dialogue:

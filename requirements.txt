@@ -3,3 +3,4 @@ pyyaml>=6.0
 python-dotenv>=1.0
 # steps 2+: fastapi, uvicorn, psycopg, redis, livekit-agents — added when those steps land
 certifi>=2024.0
+pytest>=8.0
