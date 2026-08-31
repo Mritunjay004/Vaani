@@ -29,20 +29,33 @@ def main() -> None:
                     help="seed a demo appointment for reschedule/cancel testing")
     args = ap.parse_args()
 
+    lines = None
+    if args.script:
+        try:
+            script_text = open(args.script, encoding="utf-8").read()
+        except OSError as e:
+            raise SystemExit(
+                f"script file not found: {args.script}\n"
+                "Ready-made conversations live in examples/ — e.g.\n"
+                "  python -m vaani.tools.chat_cli --lang mr-IN --seed --script examples/mr_cancel.txt"
+            ) from e
+        lines = iter(script_text.splitlines())
+
     cfg = load_config(args.config)
     store = ClinicStore(cfg.clinic, args.db)
     if args.seed:
-        appt = store.book("Ravi Kumar", "9876543210", "dr_mehta",
-                          dt.date.today() + dt.timedelta(days=2), dt.time(15, 0))
-        print(f"[seeded {appt.id}: Ravi Kumar / dr_mehta / {appt.date} {appt.time}]")
+        existing = store.find_appointments("9876543210")
+        if existing:
+            a = existing[0]
+            print(f"[seed already present: {a.id}: {a.patient_name} / {a.doctor_id} / {a.date} {a.time}]")
+        else:
+            appt = store.book("Ravi Kumar", "9876543210", "dr_mehta",
+                              dt.date.today() + dt.timedelta(days=2), dt.time(15, 0))
+            print(f"[seeded {appt.id}: Ravi Kumar / dr_mehta / {appt.date} {appt.time}]")
 
     session = DialogueSession(cfg, store, Llm(cfg.llm),
                               language_code=args.lang, caller_phone=args.phone)
     print(f"agent> {session.open()}")
-
-    lines = None
-    if args.script:
-        lines = iter(open(args.script, encoding="utf-8").read().splitlines())
 
     while not session.done:
         if lines is not None:
